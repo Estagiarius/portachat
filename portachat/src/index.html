@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>PortaChat</title>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="header">
+            <button id="settings-button">⚙️</button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <!-- As mensagens serão inseridas aqui -->
+        </div>
+        <div class="chat-input-form">
+            <textarea id="message-input" placeholder="Digite sua mensagem..."></textarea>
+            <button id="send-button">Enviar</button>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Configurações</h2>
+            <label for="api-key-input">Chave da API OpenAI:</label>
+            <input type="password" id="api-key-input" placeholder="Cole sua chave aqui">
+            <button id="save-api-key-button">Salvar</button>
+        </div>
+    </div>
+    <script type="module" src="/main.js"></script>
+</body>
+</html>
