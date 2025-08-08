@@ -1,32 +1,41 @@
-import { invoke } from 'https://cdn.jsdelivr.net/npm/@tauri-apps/api/tauri.js';
-import { marked } from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
+import { invoke } from '@tauri-apps/api/core';
+import { marked } from 'marked';
 
-// Chat elements
+// --- DOM Elements ---
 const messageInput = document.getElementById('message-input');
 const sendButton = document.getElementById('send-button');
 const chatMessages = document.getElementById('chat-messages');
-
-// Settings modal elements
-const settingsButton = document.getElementById('settings-button');
-const settingsModal = document.getElementById('settings-modal');
+const settingsToggle = document.getElementById('settings-toggle');
+const settingsPanel = document.getElementById('settings-panel');
 const apiKeyInput = document.getElementById('api-key-input');
-const saveApiKeyButton = document.getElementById('save-api-key-button');
-const closeModalButton = document.getElementById('close-modal-button');
+const saveKeyButton = document.getElementById('save-key-button');
+const keyStatus = document.getElementById('key-status');
 
 // --- Functions ---
 
+/**
+ * Adds a message to the chat window.
+ * @param {string} content The message content.
+ * @param {'user' | 'ai'} type The type of message.
+ */
 function addMessage(content, type) {
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('message', `${type}-message`);
+
+    // Sanitize and parse Markdown for AI messages
     if (type === 'ai') {
-        messageDiv.innerHTML = marked.parse(content);
+        messageDiv.innerHTML = marked.parse(content, { sanitize: true });
     } else {
         messageDiv.textContent = content;
     }
+
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+/**
+ * Handles sending a message to the backend.
+ */
 async function handleSend() {
     const prompt = messageInput.value.trim();
     if (!prompt) return;
@@ -48,41 +57,41 @@ async function handleSend() {
     }
 }
 
-function openSettingsModal() {
-    settingsModal.style.display = 'flex';
-}
-
-function closeSettingsModal() {
-    settingsModal.style.display = 'none';
-}
-
-async function saveApiKey() {
-    const apiKey = apiKeyInput.value.trim();
-    if (!apiKey) {
-        alert('Por favor, insira uma chave de API.');
+/**
+ * Saves the API key.
+ */
+async function saveKey() {
+    const key = apiKeyInput.value.trim();
+    if (!key) {
+        keyStatus.textContent = 'A chave não pode estar vazia.';
         return;
     }
+
     try {
-        await invoke('save_api_key', { key: apiKey });
-        alert('Chave de API salva com sucesso!');
-        closeSettingsModal();
-        addMessage('Sua chave de API foi salva. Agora você pode iniciar a conversa!', 'ai');
+        await invoke('save_api_key', { key });
+        keyStatus.textContent = 'Chave salva com sucesso!';
+        apiKeyInput.value = '';
+        setTimeout(() => {
+            keyStatus.textContent = 'Chave configurada.';
+        }, 2000);
     } catch (error) {
-        alert(`Erro ao salvar a chave: ${error}`);
+        keyStatus.textContent = `Erro ao salvar a chave: ${error}`;
     }
 }
 
+/**
+ * Loads the API key on startup and updates the status.
+ */
 async function checkApiKey() {
     try {
-        const apiKey = await invoke('load_api_key');
-        if (!apiKey) {
-            addMessage('Bem-vindo! Parece que você ainda não configurou sua chave de API da OpenAI. Clique no ícone de engrenagem ⚙️ no canto superior direito para começar.', 'ai');
-            openSettingsModal();
+        const key = await invoke('load_api_key');
+        if (key) {
+            keyStatus.textContent = 'Chave configurada.';
         } else {
-             addMessage('Chave de API carregada. Pronto para conversar!', 'ai');
+            keyStatus.textContent = 'Chave da API não configurada.';
         }
     } catch (error) {
-        addMessage(`Erro ao carregar a chave de API: ${error}`, 'ai');
+        keyStatus.textContent = 'Erro ao carregar a chave.';
     }
 }
 
@@ -96,9 +105,13 @@ messageInput.addEventListener('keydown', (e) => {
     }
 });
 
-settingsButton.addEventListener('click', openSettingsModal);
-closeModalButton.addEventListener('click', closeSettingsModal);
-saveApiKeyButton.addEventListener('click', saveApiKey);
+settingsToggle.addEventListener('click', () => {
+    settingsPanel.classList.toggle('hidden');
+});
 
-// --- App Initialization ---
-checkApiKey();
+saveKeyButton.addEventListener('click', saveKey);
+
+// --- Initial Load ---
+document.addEventListener('DOMContentLoaded', () => {
+    checkApiKey();
+});

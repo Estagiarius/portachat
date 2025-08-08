@@ -3,6 +3,7 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
+use tauri::Manager;
 
 // --- Data Structures for OpenAI API ---
 #[derive(Serialize, Deserialize)]
